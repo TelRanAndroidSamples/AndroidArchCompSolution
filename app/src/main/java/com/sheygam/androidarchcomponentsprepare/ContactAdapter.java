@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.List;
+
 import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 
@@ -25,7 +26,7 @@ public class ContactAdapter extends Adapter<ContactAdapter.ContactViewHolder> {
     @NonNull
     @Override
     public ContactViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.row_contact,parent,false);
+        View view = LayoutInflater.from(context).inflate(R.layout.row_contact, parent, false);
         return new ContactViewHolder(view);
     }
 
@@ -44,9 +45,13 @@ public class ContactAdapter extends Adapter<ContactAdapter.ContactViewHolder> {
         return list.size();
     }
 
-    public void setContacts(List<ContactEntity> list){
+    public void setContacts(List<ContactEntity> list) {
         this.list = list;
         notifyDataSetChanged();
+    }
+
+    public List<ContactEntity> getContacts() {
+        return list;
     }
 
     class ContactViewHolder extends ViewHolder implements View.OnClickListener {
@@ -67,7 +72,7 @@ public class ContactAdapter extends Adapter<ContactAdapter.ContactViewHolder> {
         }
     }
 
-    public interface ItemClickListener{
+    public interface ItemClickListener {
         void onItemClick(int itemId);
     }
 }

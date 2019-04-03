@@ -2,8 +2,13 @@ package com.sheygam.androidarchcomponentsprepare;
 
 
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Button;
 import android.widget.CalendarView;
@@ -22,6 +27,7 @@ public class AddContactActivity extends AppCompatActivity {
     private CalendarView calendar;
 
     private int currContactId = DEFAULT_CNT_ID;
+    private DatabaseProvider database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +43,8 @@ public class AddContactActivity extends AppCompatActivity {
             onSaveButtonClicked();
         });
 
+        database = DatabaseProvider.getInstance(getApplicationContext());
+
         if(savedInstanceState != null && savedInstanceState.containsKey(INSTANCE_KEY)){
             currContactId = savedInstanceState.getInt(INSTANCE_KEY, DEFAULT_CNT_ID);
         }
@@ -46,8 +54,15 @@ public class AddContactActivity extends AppCompatActivity {
             saveBtn.setText("Update");
             if(currContactId == DEFAULT_CNT_ID){
                 currContactId = intent.getIntExtra(EXTRA_KEY,DEFAULT_CNT_ID);
-                //Todo load from database contact
-                //Todo Update ui
+                AddContactViewModelFactory factory = new AddContactViewModelFactory(database,currContactId);
+                AddContactViewModel viewModel = ViewModelProviders.of(this).get(AddContactViewModel.class);
+                viewModel.getContact().observe(this, new Observer<ContactEntity>() {
+                    @Override
+                    public void onChanged(@Nullable ContactEntity entity) {
+                        viewModel.getContact().removeObserver(this);
+                        updateUI(entity);
+                    }
+                });
             }
         }
     }
@@ -75,6 +90,14 @@ public class AddContactActivity extends AppCompatActivity {
 
         ContactEntity entity = new ContactEntity(name,phone,bDay);
 
-        finish();
+        ThreadSchedulers.getInstance().diskIO().execute(() -> {
+            if(currContactId == DEFAULT_CNT_ID) {
+                database.contactDao().addContact(entity);
+            }else{
+                entity.setId(currContactId);
+                database.contactDao().updateContact(entity);
+            }
+            finish();
+        });
     }
 }

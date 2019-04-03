@@ -2,6 +2,10 @@ package com.sheygam.androidarchcomponentsprepare;
 
 
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -11,8 +15,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static android.support.v7.widget.DividerItemDecoration.VERTICAL;
@@ -22,6 +24,7 @@ public class MainActivity extends AppCompatActivity implements ContactAdapter.It
     private static final String TAG = MainActivity.class.getSimpleName();
     private RecyclerView recyclerView;
     private ContactAdapter adapter;
+    private DatabaseProvider database;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +46,11 @@ public class MainActivity extends AppCompatActivity implements ContactAdapter.It
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
-                //Todo Implement delete item logic
+                ThreadSchedulers.getInstance().diskIO().execute(() -> {
+                    int position = viewHolder.getAdapterPosition();
+                    List<ContactEntity> contacts = adapter.getContacts();
+                    database.contactDao().deleteTask(contacts.get(position));
+                });
             }
         }).attachToRecyclerView(recyclerView);
 
@@ -53,15 +60,14 @@ public class MainActivity extends AppCompatActivity implements ContactAdapter.It
             Intent intent = new Intent(MainActivity.this,AddContactActivity.class);
             startActivity(intent);
         });
+
+        database = DatabaseProvider.getInstance(getApplicationContext());
+        reloadUi();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        //Todo Implement load date from database
-        List<ContactEntity> fakeList = new ArrayList<>();
-        fakeList.add(new ContactEntity("Vasya","0556788990",new Date()));
-        adapter.setContacts(fakeList);
+    private void reloadUi() {
+        MainViewModel viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        viewModel.getContacts().observe(this, contactEntities -> adapter.setContacts(contactEntities));
     }
 
     @Override

@@ -1,14 +1,20 @@
 package com.sheygam.androidarchcomponentsprepare;
 
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
+import android.arch.persistence.room.PrimaryKey;
 import java.util.Date;
-
-//Todo Make Room entity
+@Entity(tableName = "contacts")
 public class ContactEntity {
+    @PrimaryKey(autoGenerate = true)
     private int id;
     private String name;
     private String phone;
+    @ColumnInfo(name = "birth_day")
     private Date birthDay;
 
+    @Ignore
     public ContactEntity(String name, String phone, Date birthDay) {
         this.name = name;
         this.phone = phone;
